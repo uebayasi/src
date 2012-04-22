@@ -37,10 +37,12 @@ __RCSID("$NetBSD$");
 #include "namespace.h"
 
 #include <assert.h>
-#include <string.h>
+#include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 #include <compat/include/stdlib.h>
 
+#include "env.h"
 #include "reentrant.h"
 #include "local.h"
 
@@ -48,23 +50,35 @@ __RCSID("$NetBSD$");
 __weak_alias(putenv,_putenv)
 #endif
 
-__warn_references(unsetenv,
+__warn_references(putenv,
     "warning: reference to compatibility putenv();"
     " include <stdlib.h> for correct reference")
 
 /*
  * putenv(name) --
- *	This version copies the string for compatibility.
+ *	This version implicitly copies the string for compatibility.
  */
 int
 putenv(char *name)
 {
+	size_t l_name;
 	char *copy;
+	int rv;
 
 	_DIAGASSERT(name != NULL);
 
+        l_name = __envvarnamelen(name, true); 
+        if (l_name == 0) { 
+                errno = EINVAL;
+                return -1;
+        }
+
 	if ((copy = strdup(name)) == NULL)
 		return -1;
+	copy[l_name++] = '\0';
 
-	return __putenv50(copy);
+	rv = setenv(copy, copy + l_name, 1);
+
+	free(copy);
+	return rv;
 }
