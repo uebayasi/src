@@ -1,7 +1,7 @@
 /*	$NetBSD: bus_dma.c,v 1.3 2011/07/19 15:44:52 dyoung Exp $	*/
 
 /*
- * Copyright (c) 2005 NONAKA Kimihiro <nonaka@netbsd.org>
+ * Copyright (c) 2005, 2010 NONAKA Kimihiro <nonaka@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.3 2011/07/19 15:44:52 dyoung Exp $");
 
 #include <machine/autoconf.h>
 
-#if defined(DEBUG) && defined(BUSDMA_DEBUG)
+#if defined(BUSDMA_DEBUG)
 int busdma_debug = 0;
 #define	DPRINTF(a)	if (busdma_debug) printf a
 #else
@@ -172,7 +172,11 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 			DPRINTF(("%s: first\n", __func__));
 			first = 0;
 
+#if !defined(SH4A_EXT_ADDR32)
 			segs[nseg].ds_addr = SH3_PHYS_TO_P2SEG(paddr);
+#else
+			segs[nseg].ds_addr = paddr;
+#endif
 			segs[nseg].ds_len = sgsize;
 			segs[nseg]._ds_vaddr = vaddr;
 		}
@@ -192,7 +196,11 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 			if (nseg >= map->_dm_segcnt)
 				break;
 
+#if !defined(SH4A_EXT_ADDR32)
 			segs[nseg].ds_addr = SH3_PHYS_TO_P2SEG(paddr);
+#else
+			segs[nseg].ds_addr = paddr;
+#endif
 			segs[nseg].ds_len = sgsize;
 			segs[nseg]._ds_vaddr = vaddr;
 		}
@@ -217,10 +225,10 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 		 * It didn't fit.  If there is a chained window, we
 		 * will automatically fall back to it.
 		 */
-		return (EFBIG);		/* XXX better return value here? */
+		return EFBIG;		/* XXX better return value here? */
 	}
 
-	return (0);
+	return 0;
 }
 
 static inline int
@@ -255,7 +263,10 @@ _bus_bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		mapped = pmap_extract(pmap, vaddr, &curaddr);
 		if (!mapped)
 			return EFAULT;
-
+#if defined(SH4A_EXT_ADDR32)    // XXXNONAKA
+		if (curaddr < 0x20000000)
+			curaddr |= 0x40000000;
+#endif
 		sgsize = PAGE_SIZE - (vaddr & PGOFSET);
 		if (len < sgsize)
 			sgsize = len;
@@ -280,10 +291,10 @@ int
 _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags)
 {
+#if !defined(SH4A_EXT_ADDR32)
 	bus_addr_t addr = (bus_addr_t)buf;
-	paddr_t lastaddr;
+#endif
 	int seg;
-	int first;
 	int error;
 
 	DPRINTF(("%s: t = %p, map = %p, buf = %p, buflen = %ld,"
@@ -295,15 +306,18 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	map->dm_nsegs = 0;
 
 	if (buflen > map->_dm_size)
-		return (EINVAL);
+		return EINVAL;
 
 	error = 0;
 	seg = 0;
 
+#if !defined(SH4A_EXT_ADDR32)
 	if (SH3_P1SEG_BASE <= addr && addr + buflen <= SH3_P2SEG_END) {
 		bus_addr_t curaddr;
 		bus_size_t sgsize;
 		bus_size_t len = buflen;
+		paddr_t lastaddr;
+		int first;
 
 		DPRINTF(("%s: P[12]SEG (0x%08lx)\n", __func__, addr));
 
@@ -327,14 +341,14 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 			len -= sgsize;
 			first = 0;
 		}
-	}
-	else {
+	} else
+#endif
+	{
 		error = _bus_bus_dmamap_load_buffer(t, map, buf, buflen,
 						    p, flags, &seg);
 	}
-
 	if (error)
-		return (error);
+		return error;
 
 	map->dm_nsegs = seg + 1;
 	map->dm_mapsize = buflen;
@@ -367,7 +381,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 #endif
 
 	if (m0->m_pkthdr.len > map->_dm_size)
-		return (EINVAL);
+		return EINVAL;
 
 	seg = 0;
 	first = 1;
@@ -384,6 +398,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 		vaddr = (vaddr_t)m->m_data;
 		size = m->m_len;
 
+#if !defined(SH4A_EXT_ADDR32)
 		if (SH3_P1SEG_BASE <= vaddr && vaddr < SH3_P3SEG_BASE) {
 			paddr = (paddr_t)(PMAP_UNMAP_POOLPAGE(vaddr));
 			error = _bus_dmamap_load_paddr(t, map,
@@ -392,8 +407,9 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 			if (error)
 				return error;
 			first = 0;
-		}
-		else {
+		} else
+#endif
+		{
 			/* XXX: stolen from load_buffer, need to refactor */
 			while (size > 0) {
 				bus_size_t sgsize;
@@ -403,6 +419,10 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 						      &paddr);
 				if (!mapped)
 					return EFAULT;
+#if defined(SH4A_EXT_ADDR32)    // XXXNONAKA
+				if (paddr < 0x20000000)
+					paddr |= 0x40000000;
+#endif
 
 				sgsize = PAGE_SIZE - (vaddr & PGOFSET);
 				if (size < sgsize)
@@ -512,6 +532,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		addr = map->dm_segs[i]._ds_vaddr;
 		naddr = addr + offset;
 
+#if !defined(SH4A_EXT_ADDR32)
 		if ((naddr >= SH3_P2SEG_BASE)
 		 && (naddr + minlen <= SH3_P2SEG_END)) {
 			DPRINTF(("%s: P2SEG (0x%08lx)\n", __func__, naddr));
@@ -519,6 +540,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			len -= minlen;
 			continue;
 		}
+#endif
 
 		DPRINTF(("%s: flushing segment %d "
 			 "(0x%lx+%lx, 0x%lx+0x%lx) (remain = %ld)\n",
@@ -586,7 +608,7 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	error = uvm_pglistalloc(size, avail_start, avail_end - PAGE_SIZE,
 	    alignment, boundary, &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
-		return (error);
+		return error;
 
 	/*
 	 * Compute the location, size, and number of segments actually
@@ -619,7 +641,7 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 
 	DPRINTF(("%s: curseg = %d, *rsegs = %d\n", __func__, curseg, *rsegs));
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -672,6 +694,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		 " kvap = %p, flags = %x\n",
 		 __func__, t, segs, nsegs, size, kvap, flags));
 
+#if !defined(SH4A_EXT_ADDR32)
 	/*
 	 * If we're mapping only a single segment, use direct-mapped
 	 * va, to avoid thrashing the TLB.
@@ -686,7 +709,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			 __func__, segs[0].ds_addr, *kvap));
 		return 0;
 	}
-
+#endif
 
 	/* Always round the size. */
 	size = round_page(size);
@@ -694,7 +717,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY
 			  | ((flags & BUS_DMA_NOWAIT) ? UVM_KMF_NOWAIT : 0));
 	if (va == 0)
-		return (ENOMEM);
+		return ENOMEM;
 	topva = va;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
@@ -716,7 +739,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 
 	pmap_update(pmap_kernel());
 	*kvap = (void *)topva;
-	return (0);
+	return 0;
 }
 
 void
@@ -732,9 +755,11 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 		panic("_bus_dmamem_unmap");
 #endif
 
+#if !defined(SH4A_EXT_ADDR32)
 	/* nothing to do if we mapped it via P1SEG or P2SEG */
 	if (SH3_P1SEG_BASE <= vaddr && vaddr <= SH3_P2SEG_END)
 		return;
+#endif
 
 	size = round_page(size);
 	pmap_kremove(vaddr, size);
@@ -748,5 +773,5 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 {
 
 	/* Not implemented. */
-	return (paddr_t)(-1);
+	return (paddr_t)-1;
 }

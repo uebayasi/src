@@ -203,9 +203,9 @@ sh3_setup_uarea(struct lwp *l)
 		sh_dcache_wbinv_range(uv, USPACE);
 	spbase = P1ADDR(spbase);
 #else /* !P1_STACK */
-#ifdef SH4
+#if defined SH4 || defined SH4A
 	/* Prepare u-area PTEs */
-	if (CPU_IS_SH4)
+	if (CPU_IS_SH4 || CPU_IS_SH4A)
 		sh4_switch_setup(l);
 #endif
 #endif /* !P1_STACK */
@@ -348,7 +348,9 @@ vmapbuf(struct buf *bp, vsize_t len)
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	kpmap = vm_map_pmap(phys_map);
 	while (len) {
-		pmap_extract(upmap, faddr, &fpa);
+		if (!pmap_extract(upmap, faddr, &fpa)) {
+			panic("vmapbuf pmap_extract failed.");
+		}
 		pmap_enter(kpmap, taddr, fpa,
 		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 		faddr += PAGE_SIZE;

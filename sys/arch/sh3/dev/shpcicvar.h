@@ -28,7 +28,12 @@
 #ifndef	_SH3_SHPCICVAR_H_
 #define	_SH3_SHPCICVAR_H_
 
+#include <sys/device.h>
 #include <sys/bus.h>
+
+int shpcic_match_common(device_t, cfdata_t, void *);
+void shpcic_attach_common(device_t, device_t, void *, uint);
+#define	SH7780PCIC_FLAGS_NO_RESET	(1 << 0)
 
 bus_space_tag_t shpcic_get_bus_io_tag(void);
 bus_space_tag_t shpcic_get_bus_mem_tag(void);

@@ -4,9 +4,14 @@
 
 #include <sh3/vmparam.h>
 
-#define VM_PHYSSEG_MAX		1
-
+#ifdef SH4A_EXT_ADDR32
+#define	VM_PHYSSEG_MAX		4
+#define	VM_NFREELIST		2
+#define	VM_FREELIST_P1ACCESS	1
+#else
+#define VM_PHYSSEG_MAX		2
 #define VM_NFREELIST		1
+#endif
 #define VM_FREELIST_DEFAULT	0
 
 #endif /* _EVBSH3_VMPARAM_H_ */

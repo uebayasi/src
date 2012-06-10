@@ -1,0 +1,23 @@
+#       $NetBSD$
+#
+# standard NetBSD/evbsh3 for RENESAS7785LCR options
+
+# Pull in RENESAS7785LCR config definitions.
+include "arch/evbsh3/conf/files.renesas7785lcr"
+
+# Executable format options
+options 	EXEC_COFF	# 32-bit COFF executables (sh-compiler)
+
+# CPU support.
+options 	SH4A
+options 	SH7785
+options 	SH4A_CPUMODE=16
+options 	SH4A_INPUT_CLOCK=33333333       # 33.333MHz (not PCLOCK)
+
+# 0x09000000 - 0x1000
+#options 	IOM_RAM_BEGIN=0x08fff000	# Specify VBR address only.
+options 	IOM_RAM_BEGIN=0x08000000	# Specify VBR address only.
+
+options 	EVBSH3_BOARDTYPE=renesas7785lcr
+makeoptions	BOARDTYPE="renesas7785lcr"
+makeoptions	BOARDMKFRAG="${THISSH3}/conf/mk.renesas7785lcr"

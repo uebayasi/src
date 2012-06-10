@@ -171,7 +171,7 @@ sh3_switch_setup(struct lwp *l)
 #endif /* SH3 */
 
 
-#ifdef SH4
+#if defined SH4 || defined SH4A
 /*
  * Prepare kernel stack PTE table.  sh4_switch_resume wires these PTEs.
  */
@@ -206,7 +206,7 @@ sh4_switch_setup(struct lwp *l)
 		++e;
 	}
 }
-#endif /* SH4 */
+#endif /* SH4 || SH4A */
 #endif /* !P1_STACK */
 
 

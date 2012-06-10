@@ -1,7 +1,7 @@
 /*	$NetBSD: pcicreg.h,v 1.3 2012/01/21 19:44:30 nonaka Exp $	*/
 
 /*-
- * Copyright (C) 2005 NONAKA Kimihiro <nonaka@netbsd.org>
+ * Copyright (C) 2005, 2010 NONAKA Kimihiro <nonaka@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
 #include <sh3/devreg.h>
 
 /*
- * PCI Controller
+ * SH7751/SH7751R PCI Controller
  */
 
 #define	SH4_PCIC		0xfe200000
@@ -140,5 +140,92 @@
 #define	PCIMBR_MASK		0xff000000
 
 #define	PCIIOBR_MASK		0xffc00000
+
+
+/*
+ * SH7780/SH7785 PCI Controller
+ */
+
+#define	SH7780_PCIC_IO		0xfe200000
+#define	SH7780_PCIC_IO_SIZE	0x00200000
+#define	SH7780_PCIC_IO_MASK	(SH7780_PCIC_IO_SIZE-1)
+#define	SH7780_PCIC_MEM		0xfd000000
+#define	SH7780_PCIC_MEM_SIZE	0x01000000
+#define	SH7780_PCIC_MEM_MASK	(SH7780_PCIC_MEM_SIZE-1)
+
+#define	SH7780_PCIECR		0xfe000008
+
+#define	SH7780_PCIVID		0xfe040000
+#define	SH7780_PCIDID		0xfe040002
+#define	SH7780_PCICMD		0xfe040004
+#define	SH7780_PCISTATUS	0xfe040006
+#define	SH7780_PCIRID		0xfe040008
+#define	SH7780_PCIPIF		0xfe040009
+#define	SH7780_PCISUB		0xfe04000a
+#define	SH7780_PCIBCC		0xfe04000b
+#define	SH7780_PCICLS		0xfe04000c
+#define	SH7780_PCILTM		0xfe04000d
+#define	SH7780_PCIHDR		0xfe04000e
+#define	SH7780_PCIBIST		0xfe04000f
+#define	SH7780_PCIIBAR		0xfe040010
+#define	SH7780_PCIMBAR0		0xfe040014
+#define	SH7780_PCIMBAR1		0xfe040018
+#define	SH7780_PCISVID		0xfe04002c
+#define	SH7780_PCISID		0xfe04002e
+#define	SH7780_PCICP		0xfe040034
+#define	SH7780_PCIINTLINE	0xfe04003c
+#define	SH7780_PCIINTPIN	0xfe04003d
+#define	SH7780_PCIMINGNT	0xfe04003e
+#define	SH7780_PCIMAXLAT	0xfe04003f
+#define	SH7780_PCICID		0xfe040040
+#define	SH7780_PCINIP		0xfe040041
+#define	SH7780_PCIPMC		0xfe040042
+#define	SH7780_PCIPMCSR		0xfe040044
+#define	SH7780_PCIPMCSRBSE	0xfe040046
+#define	SH7780_PCIPCDD		0xfe040047
+
+#define	SH7780_PCICR		0xfe040100
+#define	SH7780_PCILSR0		0xfe040104
+#define	SH7780_PCILSR1		0xfe040108
+#define	SH7780_PCILAR0		0xfe04010c
+#define	SH7780_PCILAR1		0xfe040110
+#define	SH7780_PCIIR		0xfe040114
+#define	SH7780_PCIIMR		0xfe040118
+#define	SH7780_PCIAIR		0xfe04011c
+#define	SH7780_PCICIR		0xfe040120
+#define	SH7780_PCIAINT		0xfe040130
+#define	SH7780_PCIAINTM		0xfe040134
+#define	SH7780_PCIBMIR		0xfe040138
+#define	SH7780_PCIPAR		0xfe0401c0
+#define	SH7780_PCIPINT		0xfe0401cc
+#define	SH7780_PCIPINTM		0xfe0401d0
+#define	SH7780_PCIMBR0		0xfe0401e0
+#define	SH7780_PCIMBMR0		0xfe0401e4
+#define	SH7780_PCIMBR1		0xfe0401e8
+#define	SH7780_PCIMBMR1		0xfe0401ec
+#define	SH7780_PCIMBR2		0xfe0401f0
+#define	SH7780_PCIMBMR2		0xfe0401f4
+#define	SH7780_PCIIOBR		0xfe0401f8
+#define	SH7780_PCIIOBMR		0xfe0401fc
+#define	SH7780_PCICSCR0		0xfe040210
+#define	SH7780_PCICSCR1		0xfe040214
+#define	SH7780_PCICSAR0		0xfe040218
+#define	SH7780_PCICSAR1		0xfe04021c
+#define	SH7780_PCIPDR		0xfe040220
+
+/* PCIECR */
+#define	PCIECR_ENBL		(1 << 0)
+
+/* PCICR */
+/*	PCICR_BASE		0xa5000000	*/
+#define	PCICR_PFCS		0x00000800
+#define	PCICR_FTO		0x00000400
+#define	PCICR_PFE		0x00000200
+/*	PCICR_BYTESWAP		0x00000100	*/
+/*	PCICR_BMABT		0x00000040	*/
+/*	PCICR_SERR		0x00000008	*/
+/*	PCICR_INTA		0x00000004	*/
+/*	PCICR_RSTCTL		0x00000002	*/
+/*	PCICR_CFINIT		0x00000001	*/
 
 #endif	/* _SH3_PCICREG_H__ */

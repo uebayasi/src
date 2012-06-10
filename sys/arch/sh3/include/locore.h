@@ -37,7 +37,7 @@
 #define	MOV(x, r)	mov.l .L_ ## x, r
 #define	REG_SYMBOL(x)	.L_ ## x:	.long	SH3_ ## x
 #define	FUNC_SYMBOL(x)	.L_ ## x:	.long	_C_LABEL(sh3_ ## x)
-#elif defined(SH4)
+#elif defined(SH4) || defined(SH4A)	/*XXX for now*/
 #define	MOV(x, r)	mov.l .L_ ## x, r
 #define	REG_SYMBOL(x)	.L_ ## x:	.long	SH4_ ## x
 #define	FUNC_SYMBOL(x)	.L_ ## x:	.long	_C_LABEL(sh4_ ## x)
@@ -51,7 +51,7 @@
 #define	MOV(x, r)	mov.l .L_/**/x, r
 #define	REG_SYMBOL(x)	.L_/**/x:	.long	SH3_/**/x
 #define	FUNC_SYMBOL(x)	.L_/**/x:	.long	_C_LABEL(sh3_/**/x)
-#elif defined(SH4)
+#elif defined(SH4) || defined (SH4A)	/*XXX for now.*/
 #define	MOV(x, r)	mov.l .L_/**/x, r
 #define	REG_SYMBOL(x)	.L_/**/x:	.long	SH4_/**/x
 #define	FUNC_SYMBOL(x)	.L_/**/x:	.long	_C_LABEL(sh4_/**/x)

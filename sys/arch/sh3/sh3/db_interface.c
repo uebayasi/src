@@ -52,11 +52,17 @@ db_regs_t ddb_regs;		/* register state */
 
 #ifndef KGDB
 #include <sh3/cache.h>
-#include <sh3/cache_sh3.h>
-#include <sh3/cache_sh4.h>
 #include <sh3/mmu.h>
+#if defined SH3 || defined SH4
+#include <sh3/cache_sh3.h>
 #include <sh3/mmu_sh3.h>
+#include <sh3/cache_sh4.h>
 #include <sh3/mmu_sh4.h>
+#endif
+#ifdef SH4A
+#include <sh3/cache_sh4a.h>
+#include <sh3/mmu_sh4a.h>
+#endif
 
 #include <ddb/db_command.h>
 #include <ddb/db_extern.h>
@@ -64,10 +70,11 @@ db_regs_t ddb_regs;		/* register state */
 #include <ddb/ddbvar.h>
 
 static void kdb_printtrap(u_int, int);
-
 static void db_tlbdump_cmd(db_expr_t, bool, db_expr_t, const char *);
+#if defined SH3 || defined SH4
 static char *__db_procname_by_asid(int);
 static void __db_tlbdump_pfn(uint32_t);
+#endif
 #ifdef SH4
 static void __db_tlbdump_page_size_sh4(uint32_t);
 #endif
@@ -78,6 +85,9 @@ static void __db_cachedump_sh3(vaddr_t);
 #endif
 #ifdef SH4
 static void __db_cachedump_sh4(vaddr_t);
+#endif
+#ifdef SH4A
+static void __db_cachedump_sh4a(vaddr_t);
 #endif
 
 static void db_frame_cmd(db_expr_t, bool, db_expr_t, const char *);
@@ -262,6 +272,7 @@ static void
 db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
+#if defined SH3 || defined SH4
 	static const char *pr[] = { "_r", "_w", "rr", "ww" };
 	static const char title[] =
 	    "   VPN      ASID    PFN  AREA VDCGWtPR  SZ";
@@ -269,6 +280,7 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	    "          U/K                       U/K";
 	uint32_t r, e;
 	int i;
+#endif
 #ifdef SH3
 	if (CPU_IS_SH3) {
 		/* MMU configuration. */
@@ -395,8 +407,13 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		}
 	}
 #endif /* SH4 */
+#ifdef SH4A
+	void sh4a_mmu_dump(void);
+	sh4a_mmu_dump();
+#endif
 }
 
+#if defined SH3 || defined SH4
 static void
 __db_tlbdump_pfn(uint32_t r)
 {
@@ -418,6 +435,7 @@ __db_procname_by_asid(int asid)
 
 	return (notfound);
 }
+#endif // SH3 || SH4
 
 #ifdef SH4
 static void
@@ -454,6 +472,10 @@ db_cachedump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 #ifdef SH4
 	if (CPU_IS_SH4)
 		__db_cachedump_sh4(have_addr ? addr : 0);
+#endif
+#ifdef SH4A
+	if (CPU_IS_SH4A)
+		__db_cachedump_sh4a(have_addr ? addr : 0);
 #endif
 }
 
@@ -552,6 +574,17 @@ __db_cachedump_sh4(vaddr_t va)
 	RUN_P1;
 }
 #endif /* SH4 */
+
+#ifdef SH4A
+static void
+__db_cachedump_sh4a(vaddr_t va)
+{
+	if (va)
+		sh4a_dcache_array_dump (va, 4);
+	else
+		sh4a_dcache_array_dump (0, SH4A_DCACHE_SIZE);
+}
+#endif // SH4A
 
 #undef ON
 

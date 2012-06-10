@@ -1,9 +1,11 @@
 #	$NetBSD: files.sh3,v 1.46 2011/07/26 16:24:44 dyoung Exp $
 #
 
-defflag	opt_cputype.h		SH3 SH4
+defflag	opt_cputype.h		SH3 SH4 SH4A
 
 defparam	PCLOCK
+defparam	SH4A_CPUMODE
+defparam	SH4A_INPUT_CLOCK
 
 defflag	opt_kstack_debug.h	KSTACK_DEBUG
 
@@ -17,7 +19,8 @@ defflag opt_cache.h		SH4_CACHE_WB_U0_P0_P3
 file	arch/sh3/sh3/cache.c
 file	arch/sh3/sh3/cache_sh3.c		sh3
 file	arch/sh3/sh3/cache_sh4.c		sh4
-file	arch/sh3/sh3/clock.c
+file	arch/sh3/sh3/cache_sh4a.c		sh4a
+file	arch/sh3/sh3/clock.c			sh3 | sh4
 file	arch/sh3/sh3/coff_exec.c		exec_coff
 file	arch/sh3/sh3/compat_16_machdep.c	compat_16
 file	arch/sh3/sh3/core_machdep.c		coredump
@@ -29,7 +32,7 @@ file	arch/sh3/sh3/db_trace.c			ddb
 file	arch/sh3/sh3/devreg.c			sh3 & sh4
 file	arch/sh3/sh3/exception.c
 file	arch/sh3/sh3/exception_vector.S
-file	arch/sh3/sh3/interrupt.c
+file	arch/sh3/sh3/interrupt.c		sh3 | sh4
 file	arch/sh3/sh3/kgdb_machdep.c		kgdb
 file	arch/sh3/sh3/kobj_machdep.c		modular
 file	arch/sh3/sh3/lock_stubs.S
@@ -38,13 +41,22 @@ file	arch/sh3/sh3/locore_subr.S
 file	arch/sh3/sh3/mmu.c
 file	arch/sh3/sh3/mmu_sh3.c			sh3
 file	arch/sh3/sh3/mmu_sh4.c			sh4
+file	arch/sh3/sh3/mmu_sh4a.c			sh4a
+file	arch/sh3/sh3/pmb.c			sh4a
+file	arch/sh3/sh3/pmb_subr.S			sh4a
 file	arch/sh3/sh3/pmap.c
+file	arch/sh3/sh3/pmap_cache_ops.c
 file	arch/sh3/sh3/process_machdep.c
 file	arch/sh3/sh3/procfs_machdep.c		procfs
 file	arch/sh3/sh3/sh3_machdep.c
 file	arch/sh3/sh3/sys_machdep.c
 file	arch/sh3/sh3/syscall.c
 file	arch/sh3/sh3/vm_machdep.c
+
+# Product dependent drivers.
+file	arch/sh3/7785/cpg.c			sh7785
+file	arch/sh3/7785/clock.c			sh7785
+file	arch/sh3/7785/interrupt.c		sh7785
 
 file	dev/cninit.c
 file	dev/cons.c

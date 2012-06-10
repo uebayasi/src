@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: mmu.c,v 1.18 2008/04/28 20:23:35 martin Exp $");
 #include <sh3/mmu.h>
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
+#include <sh3/mmu_sh4a.h>
 
 #if defined(SH3) && defined(SH4)
 void (*__sh_mmu_start)(void);
@@ -87,8 +88,8 @@ sh_mmu_information(void)
 		    r & SH3_MMUCR_SV ? "single" : "multiple");
 	}
 #endif
-#ifdef SH4
-	if (CPU_IS_SH4) {
+#if defined SH4 || defined SH4A
+	if (CPU_IS_SH4 || CPU_IS_SH4A) {
 		unsigned int urb;
 		aprint_normal("cpu0: full-associative"
 			      " 4 ITLB, 64 UTLB entries\n");
@@ -102,6 +103,9 @@ sh_mmu_information(void)
 		    urb ? 64 - urb : 0);
 	}
 #endif
+#ifdef SH4A
+	sh4a_mmu_information();
+#endif
 }
 
 void
@@ -109,4 +113,11 @@ sh_tlb_set_asid(int asid)
 {
 
 	_reg_write_4(SH_(PTEH), asid);
+}
+
+int
+sh_tlb_get_asid(void)
+{
+
+	return _reg_read_4(SH_(PTEH)) & 0xff;
 }

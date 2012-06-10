@@ -125,6 +125,8 @@ struct _bus_space {
 	void		(*bs_free)(void *, bus_space_handle_t,
 			    bus_size_t);
 
+	paddr_t 	(*bs_mmap)(void *, bus_addr_t, off_t, int, int);
+
 	/* get kernel virtual address */
 	void *		(*bs_vaddr)(void *, bus_space_handle_t);
 

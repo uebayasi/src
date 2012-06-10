@@ -1,0 +1,127 @@
+#	$NetBSD$
+#
+#	RENESAS7785LCR -- renesas evaluation board R0P7785LC0011RL
+#
+
+machine evbsh3 sh3
+include		"conf/std"			# MI standard options
+include		"arch/sh3/conf/std.sh3el"	# arch standard options
+include		"arch/evbsh3/conf/std.renesas7785lcr"
+
+maxusers	32		# estimated number of users
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+# Enable the hooks used for initializing the root memory-disk.
+#options 	MEMORY_DISK_HOOKS
+#options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+#options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+#options 	MEMORY_DISK_ROOT_SIZE=8192	# size of memory disk, in blocks
+#options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
+
+makeoptions	CPUFLAGS="-m4-nofpu"
+
+# CPU support.
+#options 	SH4A_EXT_ADDR32	# 32bit physical address mode. XXXnotyet
+#options 	SH4A_EXT_MMU # TLB-extended mode. XXXnotyet.
+
+# Standard system options
+
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+#options 	HZ=100
+options 	NTP		# NTP phase/frequency locked loop
+
+options 	KTRACE		# system call tracing via ktrace(1)
+
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
+
+options 	USERCONF	# userconf(4) support
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Development and Debugging options
+options 	DIAGNOSTIC	# cheap kernel consistency checks
+options 	DEBUG
+options 	DDB		# in-kernel debugger
+options 	POOL_DIAGNOSTIC
+options 	LOCKDEBUG	# expensive locking checks/support
+options 	UVMHIST
+#options 	UVMHIST_PRINT
+#options 	PGALLOC_VERBOSE
+options 	KSTACK_DEBUG
+options 	SYMTAB_SPACE=512000
+
+#options 	USERCONF	# userconf(4) support
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Compatibility options
+options 	COMPAT_50	# NetBSD 5.0
+options 	COMPAT_43	# and 4.3BSD
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+# File systems
+file-system 	FFS		# UFS
+file-system 	NFS		# NFS
+file-system	PTYFS		# /dev/ptm support
+file-system	PROCFS		# /proc
+file-system	TMPFS		# Efficient memory file-system
+
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	WAPBL		# File system journaling support - Experimental
+
+# Networking options
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+
+# Kernel root file system and dump configuration.
+config		netbsd		root on ? type ?
+config		netbsd-re0	root on re0 type nfs
+
+options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
+
+#
+# Device configuration
+#
+mainbus0 at root
+cpu*	at mainbus?
+shb*	at mainbus?
+options 	SCIFCONSOLE,SCIFCN_SPEED=115200
+scif0 at shb?
+
+# PCA9564 I2C controller
+pcaiic* at mainbus?
+iic* at pcaiic?
+r2025rtc* at iic? addr 0x32
+
+# PCI bus support
+#options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+options 	PCI_NETBSD_CONFIGURE
+shpcic*	at mainbus?			# SH7785 PCIC
+pci0	at shpcic? bus ?
+
+re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
+rgephy* at mii? phy ?			# Realtek 8169S/8110S internal PHYs
+
+satalink* at pci? dev ? function ?	# SiI SATALink controllers
+atabus* at ata?
+wd*	at atabus? drive ? flags 0x0000
+
+
+# Pseudo-Devices
+pseudo-device	md		1	# memory disk device (ramdisk)
+
+pseudo-device	vnd			# disk-like interface to files
+options 	VND_COMPRESSION		# compressed vnd(4)
+
+# network pseudo-devices
+pseudo-device	bpfilter		# Berkeley packet filter
+pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	loop			# network loopback
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
+#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms

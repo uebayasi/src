@@ -754,7 +754,7 @@ sii3114_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
 	/* Map and establish the interrupt handler. */
-	if (pci_intr_map(pa, &intrhandle) != 0) {
+	if (pci_intr_map(__UNCONST(pa), &intrhandle) != 0) {
 		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 		    "couldn't map native-PCI interrupt\n");
 		return;

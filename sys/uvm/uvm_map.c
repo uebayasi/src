@@ -4008,6 +4008,8 @@ uvmspace_unshare(struct lwp *l)
 	uvmspace_free(ovm);		/* drop reference to old vmspace */
 }
 
+//	void sh4a_mmu_dump (void);
+//	sh4a_mmu_dump ();
 #endif
 
 

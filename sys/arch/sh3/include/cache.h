@@ -183,7 +183,8 @@ void sh_cache_init(void);
 void sh_cache_information(void);
 
 #define	SH_HAS_UNIFIED_CACHE	CPU_IS_SH3
-#define	SH_HAS_VIRTUAL_ALIAS	CPU_IS_SH4
+//XXX-uch bogus define. some SH3 variants has virtual alias.
+#define	SH_HAS_VIRTUAL_ALIAS	(CPU_IS_SH4 || CPU_IS_SH4A)
 #define	SH_HAS_WRITEBACK_CACHE	(!sh_cache_write_through)
 
 #endif /* _KERNEL */

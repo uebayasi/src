@@ -68,11 +68,10 @@ cpu_attach(device_t parent, device_t self, void *aux)
 #define	MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
 
 	aprint_naive("\n");
-	aprint_normal(": SH%d %d.%02d MHz PCLOCK %d.%02d MHz\n",
-	       CPU_IS_SH3 ? 3 : 4,
-	       MHZ(sh_clock_get_cpuclock()),
-	       MHZ(sh_clock_get_pclock()));
-
+	aprint_normal(": SH%d%s %d.%02d MHz PCLOCK %d.%02d MHz\n",
+	    CPU_IS_SH3 ? 3 : 4, CPU_IS_SH4A ? "A" : "",
+	    MHZ(sh_clock_get_cpuclock()),
+	    MHZ(sh_clock_get_pclock()));
 #undef MHZ
 
 	sh_cache_information();

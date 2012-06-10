@@ -297,7 +297,7 @@ VECTOR_END_MARKER(sh3_vector_tlbmiss_end)
 #endif /* SH3 */
 
 
-#ifdef SH4
+#if defined SH4 || defined SH4A /* SH4A TLB-compatible mode */
 /*
  * LINTSTUB: Var: char sh4_vector_tlbmiss[1];
  *
@@ -314,6 +314,7 @@ VECTOR_END_MARKER(sh3_vector_tlbmiss_end)
  * and maximum 512 bytes long (== 0x600 - 0x400).
  */
 NENTRY(sh4_vector_tlbmiss)
+#ifndef SH4A_EXT_ADDR32 /*XXXNONAKA*/
 	mov.l	.L4_SH4_PTEH, r4
 	mov.l	.L4_VPN_cleanup, r0
 	mov.l	@r4, r5
@@ -382,13 +383,20 @@ NENTRY(sh4_vector_tlbmiss)
 	mov.l	.L4_PG_HW_BITS, r1
 	shlr8	r0
 	and	r1, r3		! pte &= PG_HW_BITS
+#ifndef SH4A
 	shlr	r0		! pte >> _PG_PCMCIA_SHIFT
+#endif
 	cmp/pz	r5		! user space address?
+#ifndef SH4A
 	and	#SH4_PTEA_SA_MASK, r0
+#endif
 	mov.l	r3, @(0x04, r4)	! *SH4_PTEL = pte
 	bf/s	.L4_load_kernel
+#ifdef SH4A
+	 nop
+#else
 	 mov.l	r0, @(0x34, r4)	! *SH4_PTEA = PCMCIA space attrs
-
+#endif
 	!! load mapping for a user space page
 	!! we reload PTEH to enter VPN aligned to 4K page boundary
 .L4_load_user:
@@ -413,6 +421,7 @@ NENTRY(sh4_vector_tlbmiss)
 	!! if we haven't found a valid mapping in the fast path
 	!!     tlb_exception(curlwp, trapframe, tea)
 .L4_call_tlb_exception:
+#endif /*SH4A_EXT_ADDR32 XXXNONAKA*/
 	__EXCEPTION_ENTRY
 	mov.l	.L4_SH4_PTEH, r0
 	mov.l	.L4_curlwp, r1

@@ -41,6 +41,7 @@
 
 #define	CPU_ARCH_SH3		3
 #define	CPU_ARCH_SH4		4
+#define	CPU_ARCH_SH4A		5
 
 /* SH3 series */
 #define	CPU_PRODUCT_7708	1
@@ -57,6 +58,9 @@
 #define	CPU_PRODUCT_7751	10
 #define	CPU_PRODUCT_7751R	11
 
+/* SH4A series */
+#define	CPU_PRODUCT_7780	12
+#define	CPU_PRODUCT_7785	13
 
 #ifndef _LOCORE
 extern int cpu_arch;
@@ -67,11 +71,17 @@ extern int cpu_product;
 #elif defined(SH3)
 #define	CPU_IS_SH3		(/* CONSTCOND */1)
 #define	CPU_IS_SH4		(/* CONSTCOND */0)
+#define	CPU_IS_SH4A		(/* CONSTCOND */0)
 #elif defined(SH4)
 #define	CPU_IS_SH3		(/* CONSTCOND */0)
 #define	CPU_IS_SH4		(/* CONSTCOND */1)
+#define	CPU_IS_SH4A		(/* CONSTCOND */0)
+#elif defined(SH4A)
+#define	CPU_IS_SH3		(/* CONSTCOND */0)
+#define	CPU_IS_SH4		(/* CONSTCOND */0)
+#define	CPU_IS_SH4A		(/* CONSTCOND */1)
 #else
-#error "define SH3 and/or SH4"
+#error "define SH3 and/or SH4 or SH4A"
 #endif
 #endif /* !_LOCORE */
 

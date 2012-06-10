@@ -11,7 +11,7 @@ maxusers 2 16 64
 file	arch/evbsh3/evbsh3/autoconf.c
 file	arch/evbsh3/evbsh3/bus_dma.c
 file	arch/evbsh3/evbsh3/conf.c
-file	arch/evbsh3/evbsh3/machdep.c
+file	arch/evbsh3/evbsh3/machdep.c		sh3 | sh4
 file	arch/sh3/sh3/disksubr.c			disk
 
 defparam opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
@@ -33,6 +33,11 @@ include "dev/scsipi/files.scsipi"
 
 include "dev/ata/files.ata"
 
+#
+# Machine-independent I2O drivers
+#
+include "dev/i2o/files.i2o"
+
 # Memory Disk for install floppy
 file dev/md_root.c				memory_disk_hooks
 
@@ -41,7 +46,7 @@ file dev/md_root.c				memory_disk_hooks
 #
 
 define mainbus { }
-device	mainbus: mainbus
+device	mainbus: mainbus, pcibus
 attach	mainbus at root
 file	arch/evbsh3/evbsh3/mainbus.c		mainbus
 

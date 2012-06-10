@@ -341,7 +341,7 @@ pciide_mapregs_native(const struct pci_attach_args *pa,
 	cp->compat = 0;
 
 	if (sc->sc_pci_ih == NULL) {
-		if (pci_intr_map(pa, &intrhandle) != 0) {
+		if (pci_intr_map(__UNCONST(pa), &intrhandle) != 0) {
 			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 			    "couldn't map native-PCI interrupt\n");
 			goto bad;

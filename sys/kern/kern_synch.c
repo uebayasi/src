@@ -725,6 +725,12 @@ mi_switch(lwp_t *l)
 			(*dtrace_vtime_switch_func)(newl);
 		}
 
+#if 0	// XXXNONAKA
+	volatile int t1 = l->l_md.md_pcb->pcb_sf.sf_gbr;
+	volatile int t2 = newl->l_md.md_pcb->pcb_sf.sf_gbr;
+	(void) t1;
+	(void) t2;
+#endif
 		/* Switch to the new LWP.. */
 		prevlwp = cpu_switchto(l, newl, returning);
 		ci = curcpu();
@@ -883,6 +889,10 @@ lwp_exit_switchaway(lwp_t *l)
 		(*dtrace_vtime_switch_func)(newl);
 	}
 
+#if 0	// XXXNONAKA
+	volatile int t = newl->l_md.md_pcb->pcb_sf.sf_gbr;
+	(void) t;
+#endif
 	/* Switch to the new LWP.. */
 	(void)cpu_switchto(NULL, newl, false);
 

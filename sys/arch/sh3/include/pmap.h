@@ -39,6 +39,7 @@
 #ifndef _SH3_PMAP_H_
 #define	_SH3_PMAP_H_
 #include <sys/queue.h>
+#include <sh3/cache.h>	// virtual alias information.
 #include <sh3/pte.h>
 
 #define	PMAP_NEED_PROCWR
@@ -51,6 +52,13 @@ struct pmap {
 	int pm_asid;
 	int pm_refcnt;
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
+};
+
+/* pv_entry ops. */
+struct pv_entry {
+	struct pmap *pv_pmap;
+	vaddr_t pv_va;
+	SLIST_ENTRY(pv_entry) pv_link;
 };
 
 void pmap_bootstrap(void);
@@ -71,14 +79,22 @@ pmap_remove_all(struct pmap *pmap)
  * pmap_prefer() helps to avoid virtual cache aliases on SH4 CPUs
  * which have the virtually-indexed cache.
  */
-#ifdef SH4
+#if defined SH4 || defined SH4A //XXX should be  SH_HAS_VIRTUAL_ALIAS
 #define PMAP_PREFER(pa, va, sz, td)     pmap_prefer((pa), (va))
 void pmap_prefer(vaddr_t, vaddr_t *);
-#endif /* SH4 */
+#endif /* SH_HAS_VIRTUAL_ALIAS */
 
+//#ifndef SH4A_EXT_ADDR32	// 32bit address mode.
+#if 0
+vaddr_t pmap_map_poolpage(paddr_t);
+paddr_t pmap_unmap_poolpage(vaddr_t);
+#define	PMAP_MAP_POOLPAGE(pa)		pmap_map_poolpage(pa)
+#define	PMAP_UNMAP_POOLPAGE(va)		pmap_unmap_poolpage(va)
+#else
 #define	PMAP_MAP_POOLPAGE(pa)		SH3_PHYS_TO_P1SEG((pa))
 #define	PMAP_UNMAP_POOLPAGE(va)		SH3_P1SEG_TO_PHYS((va))
-
+#endif
+//#endif
 /* MD pmap utils. */
 pt_entry_t *__pmap_pte_lookup(pmap_t, vaddr_t);
 pt_entry_t *__pmap_kpte_lookup(vaddr_t);

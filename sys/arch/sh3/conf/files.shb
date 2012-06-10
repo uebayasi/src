@@ -25,7 +25,8 @@ defflag	opt_scif.h	SCIFCONSOLE
 defparam opt_scif.h	SCIFCN_SPEED
 device	scif: tty
 attach	scif at shb
-file	arch/sh3/dev/scif.c		scif	needs-flag
+file	arch/sh3/dev/scif.c		scif & (sh3 | sh4)	needs-flag
+file	arch/sh3/7785/scif.c		scif & sh7785	needs-flag
 
 device	adc {}
 attach	adc at shb

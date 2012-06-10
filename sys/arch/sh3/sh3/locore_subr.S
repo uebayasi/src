@@ -129,7 +129,7 @@ ENTRY(cpu_switchto)
 	ldc	r2, r6_bank
 	mov	r3, r15
 
-#if !defined(P1_STACK) && defined(SH4)
+#if !defined(P1_STACK) && (defined(SH4) || defined(SH4A))
 	!! wire u-area in TLB
 	MOV	(switch_resume, r0)
 	jsr	@r0
@@ -158,7 +158,7 @@ ENTRY(cpu_switchto)
 .L_curlwp:		.long	_C_LABEL(curlwp)
 .L_curpcb:		.long	_C_LABEL(curpcb)
 .L_cpu_switch_prepare:	.long	_C_LABEL(cpu_switch_prepare)
-#ifdef SH4
+#if defined SH4 || defined SH4A
 FUNC_SYMBOL(switch_resume)
 #endif
 	SET_ENTRY_SIZE(cpu_switchto)
@@ -176,7 +176,7 @@ NENTRY(sh3_switch_resume)
 #endif /* SH3 */
 
 
-#ifdef SH4
+#if defined SH4 || defined SH4A
 /*
  * LINTSTUB: Func: void sh4_switch_resume(struct lwp *l)
  *	Wire u-area. invalidate TLB entry for kernel stack to prevent
@@ -197,7 +197,7 @@ NENTRY(sh4_switch_resume)
 
 	mov.l	.L_VPN_MASK, r6
 	mov.l	.L_4_UTLB_AA_A, r5
-
+/*-uch SH4A don't have this constraint.*/
 	/* TLB address array must be accessed via P2. Setup jump address. */
 	mova	1f, r0
 	mov.l	.L_P2BASE, r1
@@ -236,7 +236,7 @@ NENTRY(sh4_switch_resume)
 .L_VPN_MASK:		.long	0xfffff000
 .L_P2BASE:		.long	0xa0000000
 	SET_ENTRY_SIZE(sh4_switch_resume)
-#endif /* SH4 */
+#endif /* SH4 || SH4A */
 
 
 /*

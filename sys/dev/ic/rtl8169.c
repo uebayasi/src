@@ -826,6 +826,11 @@ re_attach(struct rtk_softc *sc)
 
 	callout_init(&sc->rtk_tick_ch, 0);
 
+#if 1	// XXXNONAKA from OpenBSD
+	re_gmii_writereg(sc->sc_dev, 1, 0x1f, 0);
+	re_gmii_writereg(sc->sc_dev, 1, 0x0e, 0);
+#endif
+
 	/* Do MII setup */
 	sc->mii.mii_ifp = ifp;
 	sc->mii.mii_readreg = re_miibus_readreg;

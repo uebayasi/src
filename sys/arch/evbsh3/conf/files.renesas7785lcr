@@ -1,0 +1,22 @@
+#	$NetBSD$
+#
+#	RENESAS7785LCR
+
+file	arch/evbsh3/renesas7785lcr/clock_machdep.c
+file	arch/evbsh3/renesas7785lcr/machdep.c
+file	arch/evbsh3/renesas7785lcr/renesas7785lcr_space.c
+
+#
+# PCI bus
+#
+include "dev/pci/files.pci"
+include	"arch/sh3/conf/files.shpcic"
+
+file	arch/evbsh3/renesas7785lcr/shpcic_machdep.c
+
+#
+# I2C controller
+#
+device	pcaiic: pca9564, i2cbus
+attach	pcaiic at mainbus
+file	arch/evbsh3/renesas7785lcr/pcaiic_mainbus.c	pcaiic

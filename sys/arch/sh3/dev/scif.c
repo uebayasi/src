@@ -303,7 +303,7 @@ static int kgdb_attached = 0;
 
 #define scif_fdr_read()		SHREG_SCFDR2
 
-#ifdef SH4 /* additional registers in sh4 */
+#if defined SH4 || defined SH4A /* additional registers in sh4 */
 
 #define scif_sptr_read()	SHREG_SCSPTR2
 #define scif_sptr_write(v)	(SHREG_SCSPTR2 = (v))
@@ -313,11 +313,27 @@ static int kgdb_attached = 0;
 
 #endif /* SH4 */
 
+#ifdef SH7785
+#define	SCSMR1		((volatile uint16_t *)0xffeb0000)
+#define	SCBRR1		((volatile uint8_t *) 0xffeb0004)
+#define	SCSCR1		((volatile uint16_t *)0xffeb0008)
+#define	SCFTDR1		((volatile uint8_t *) 0xffeb000c)
+#define	SCFSR1		((volatile uint16_t *)0xffeb0010)
+#define	SCFRDR1		((volatile uint8_t *) 0xffeb0014)
+#define	SCFCR1		((volatile uint16_t *)0xffeb0018)
+#endif
 
 void
 InitializeScif(unsigned int bps)
 {
+#ifdef SH7785
+  *SCSCR1 = 0x2;	/*CKE1 external clock */
+  *SCSCR1 |= (1 << 5)/*TE*/ | (1 << 4)/*RE*/;
+  *SCSMR1 = 1/*CKS0*/;
+  *SCBRR1 = 0;
+  *SCFCR1 = 0;
 
+#else
 	/* Initialize SCR */
 	scif_scr_write(0x00);
 
@@ -349,6 +365,7 @@ InitializeScif(unsigned int bps)
 
 	/* Serial Status Register */
 	scif_ssr_write(scif_ssr_read() & SCSSR2_TDFE); /* Clear Status */
+#endif
 }
 
 int
@@ -361,7 +378,14 @@ ScifErrCheck(void)
 void
 scif_putc(unsigned char c)
 {
-
+#ifdef SH7785
+  while ((*SCFSR1 & (1 << 5)/*TDFE*/) == 0)
+    ;
+  *SCFTDR1 = c;
+  *SCFSR1 &= ~((1 << 5)/*TDFE*/ | (1 << 6)/*TEND*/);
+  while ((*SCFSR1 & (1 << 6)/*TEND*/) == 0)
+    ;
+#else
 	/* wait for ready */
 	while ((scif_fdr_read() & SCFDR2_TXCNT) == SCFDR2_TXF_FULL)
 		continue;
@@ -371,13 +395,24 @@ scif_putc(unsigned char c)
 
 	/* clear ready flag */
 	scif_ssr_write(scif_ssr_read() & ~(SCSSR2_TDFE | SCSSR2_TEND));
+#endif
 }
 
 unsigned char
 scif_getc(void)
 {
+#ifdef SH7785
+  uint8_t c;
+
+  while (((c = *SCFSR1) & 0x2/*RDF*/) == 0)
+    ;
+
+  c = *SCFRDR1;
+  *SCFSR1 &= ~0x2/*RDF*/;
+  return c;
+#else
 	unsigned char c, err_c;
-#ifdef SH4
+#if defined SH4 || defined SH4A
 	unsigned short err_c2 = 0; /* XXXGCC: -Wuninitialized */
 #endif
 
@@ -390,7 +425,7 @@ scif_getc(void)
 		err_c = scif_ssr_read();
 		scif_ssr_write(scif_ssr_read()
 			& ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_RDF | SCSSR2_DR));
-#ifdef SH4
+#if defined SH4 || defined SH4A
 		if (CPU_IS_SH4) {
 			err_c2 = scif_lsr_read();
 			scif_lsr_write(scif_lsr_read() & ~SCLSR2_ORER);
@@ -399,13 +434,13 @@ scif_getc(void)
 		if ((err_c & (SCSSR2_ER | SCSSR2_BRK | SCSSR2_FER
 		    | SCSSR2_PER)) == 0)
 		{
-#ifdef SH4
+#if defined SH4 || defined SH4A
 			if (CPU_IS_SH4 && ((err_c2 & SCLSR2_ORER) == 0))
 #endif
 			return(c);
 		}
 	}
-
+#endif
 }
 
 static int
@@ -457,7 +492,7 @@ scif_attach(device_t parent, device_t self, void *aux)
 	}
 
 	callout_init(&sc->sc_diag_ch, 0);
-#ifdef SH4
+#if defined SH4 || defined SH4A
 	intc_intr_establish(SH4_INTEVT_SCIF_ERI, IST_LEVEL, IPL_SERIAL,
 	    scifintr, sc);
 	intc_intr_establish(SH4_INTEVT_SCIF_RXI, IST_LEVEL, IPL_SERIAL,
@@ -615,6 +650,10 @@ scifparam(struct tty *tp, struct termios *t)
 	 * mode.
 	 */
 	if (ISSET(t->c_cflag, CRTSCTS)) {
+	  /*
+	   * !DANGER! SH7709 SCIF module has CTS bug.
+	   *  RTSCTS flow control causes data lost.
+	   */
 		scif_fcr_write(scif_fcr_read() | SCFCR2_MCE);
 	} else {
 		scif_fcr_write(scif_fcr_read() & ~SCFCR2_MCE);
@@ -808,6 +847,9 @@ scifopen(dev_t dev, int flag, int mode, struct lwp *l)
 	error = (*tp->t_linesw->l_open)(dev, tp);
 	if (error)
 		goto bad;
+
+	(void) (*tp->t_linesw->l_modem)(tp, 1);//XXX force to carrier -uch
+
 
 	return (0);
 
@@ -1218,7 +1260,7 @@ scifintr(void *arg)
 
 				scif_ssr_write(scif_ssr_read()
 				    & ~(SCSSR2_ER | SCSSR2_RDF | SCSSR2_DR));
-#ifdef SH4
+#if defined SH4 || defined SH4A
 				if (CPU_IS_SH4)
 					scif_lsr_write(scif_lsr_read()
 						       & ~SCLSR2_ORER);

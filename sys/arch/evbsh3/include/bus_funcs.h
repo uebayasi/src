@@ -133,6 +133,9 @@ do {									\
 #define	bus_space_free(t, h, s)						\
 	(*(t)->bs_free)((t)->bs_cookie, (h), (s))
 
+#define bus_space_mmap(t, h, o, p, f) \
+	(*(t)->bs_mmap)((t)->bs_cookie, (h), (o), (p), (f))
+
 /*
  * Get kernel virtual address for ranges mapped BUS_SPACE_MAP_LINEAR.
  */

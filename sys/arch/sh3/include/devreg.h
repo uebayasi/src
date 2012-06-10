@@ -64,7 +64,7 @@
 #define	SH_(x)		__sh_ ## x
 #elif defined(SH3)
 #define	SH_(x)		SH3_ ## x
-#elif defined(SH4)
+#elif defined(SH4) || defined(SH4A)	/*XXX for now.*/
 #define	SH_(x)		SH4_ ## x
 #endif
 

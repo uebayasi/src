@@ -39,8 +39,15 @@ __KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.16 2009/03/18 10:22:36 cegger Exp $");
 #include <sys/systm.h>
 
 #include <sh3/cache.h>
+#ifdef SH3
 #include <sh3/cache_sh3.h>
+#endif
+#ifdef SH4
 #include <sh3/cache_sh4.h>
+#endif
+#ifdef SH4A
+#include <sh3/cache_sh4a.h>
+#endif
 
 /*
  * __cache_flush is used before sh_cache_config() is called.
@@ -88,6 +95,10 @@ sh_cache_init(void)
 #ifdef SH4
 	if (CPU_IS_SH4)
 		sh4_cache_config();
+#endif
+#ifdef SH4A
+	if (CPU_IS_SH4A)
+		sh4a_cache_config();
 #endif
 }
 

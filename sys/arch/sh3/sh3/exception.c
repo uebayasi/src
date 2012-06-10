@@ -272,9 +272,15 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
  *	tf ... full user context.
  *	va ... fault address.
  */
+int __tlb_exception_cnt;
+int __tlb_exception_debug;
 void
 tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 {
+	if (__tlb_exception_debug)
+		printf ("%s from %s va=%x EXPEVT=%x\n", __FUNCTION__,
+		    KERNELMODE(tf->tf_ssr) ? "kernel" : "user", va, tf->tf_expevt);
+	__tlb_exception_cnt++;
 	struct vm_map *map;
 	struct pcb *pcb;
 	pmap_t pmap;
@@ -358,8 +364,10 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 			map = kernel_map;
 			pmap = pmap_kernel();
 		} else {
+#if 0// allow user-space access from kernel mode -uch
 			TLB_ASSERT(l != NULL && onfault != NULL,
 			    "invalid user-space access from kernel mode");
+#endif
 			if (va == 0) {
 				tf->tf_spc = (int)onfault;
 				tf->tf_r0 = EFAULT;
@@ -367,6 +375,9 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 			}
 			map = &l->l_proc->p_vmspace->vm_map;
 			pmap = map->pmap;
+#if 0//XXXNONAKA
+			printf("%s: ASID%d\n", __FUNCTION__,pmap->pm_asid);
+#endif
 		}
 	}
 
@@ -422,9 +433,25 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 		else {
 			ksi.ksi_signo = SIGSEGV;
 			ksi.ksi_code = SEGV_MAPERR;
+#ifdef DEBUG
+			void sh4a_mmu_dump (void);
+			sh4a_mmu_dump ();
+#endif
+#if 0//XXXUEBS
+			panic(__FUNCTION__);
+#endif
 		}
 		goto user_fault;
 	} else {
+#ifdef DEBUG
+		void sh4a_mmu_dump(void);
+		uint32_t r;
+		__asm volatile ("stc spc, %0" : "=r"(r));
+		printf ("%x\n", tf->tf_r8);
+		printf("!!!!%s %x %x!!!!\n", __FUNCTION__, va, r);
+		sh4a_mmu_dump();
+#endif
+
 		TLB_ASSERT(onfault,
 		    "no copyin/out fault handler (page not found)");
 		tf->tf_spc = (int)onfault;

@@ -36,12 +36,15 @@
 #define SH3_SCIF0_BASE	0xa4000150
 #define SH3_SCIF1_BASE	0xa4000140
 
+#ifdef SH7785
+#define SH4_SCIF_BASE	0xffeb0000	//XXX-uch SH7785 SCIF1
+#else
 #define SH4_SCIF_BASE	0xffe80000
+#endif
 
 #ifdef SH3
 
 /* SH3 definitions */
-
 #define	SCIF_SMR		0x0	/* serial mode */
 #define	SCIF_BRR		0x2	/* bit rate */
 #define	SCIF_SCR		0x4	/* serial control */
@@ -71,11 +74,16 @@
 #define	SCIF_SSR		0x10	/* serial status */
 #define	SCIF_FRDR		0x14	/* receive fifo data */
 #define	SCIF_FCR		0x18	/* fifo control */
-#define	SCIF_FDR		0x1c	/* fifo data count set */
 
+#ifdef SH7785
+#define	SCIF_FDR		0x20	/* fifo data count set RX*/
+#define SCIF_SPTR		0x24	/* seial port */
+#define SCIF_LSR		0x28	/* line status */
+#else
+#define	SCIF_FDR		0x1c	/* fifo data count set */
 #define SCIF_SPTR		0x20	/* seial port */
 #define SCIF_LSR		0x24	/* line status */
-
+#endif
 #define	SHREG_SCSMR2  (*(volatile uint16_t *)(SH4_SCIF_BASE + SCIF_SMR))
 #define	SHREG_SCBRR2  (*(volatile uint8_t  *)(SH4_SCIF_BASE + SCIF_BRR))
 #define	SHREG_SCSCR2  (*(volatile uint16_t *)(SH4_SCIF_BASE + SCIF_SCR))

@@ -580,6 +580,13 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	struct uvm_object *obj;
 	int pgaflags;
 	vm_prot_t prot;
+	if (!map) {
+		uint32_t r;
+		__asm volatile ("sts pr, %0" : "=r"(r));
+		printf ("PR=%x\n", r);
+		assert (0);
+	}
+
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	KASSERT(vm_map_pmap(map) == pmap_kernel());
@@ -648,6 +655,10 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 		KASSERTMSG(!pmap_extract(pmap_kernel(), loopva, NULL),
 		    "loopva=%#"PRIxVADDR, loopva);
 
+#ifdef SH4A_EXT_ADDR32
+		pg = uvm_pagealloc_strat(NULL, offset, NULL, pgaflags,
+		    UVM_PGA_STRAT_ONLY, VM_FREELIST_P1ACCESS);
+#else
 		pg = uvm_pagealloc_strat(NULL, offset, NULL, pgaflags,
 #ifdef UVM_KM_VMFREELIST
 		   UVM_PGA_STRAT_ONLY, UVM_KM_VMFREELIST
@@ -655,6 +666,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 		   UVM_PGA_STRAT_NORMAL, 0
 #endif
 		   );
+#endif
 
 		/*
 		 * out of memory?
@@ -753,8 +765,14 @@ again:
 		pg = PMAP_ALLOC_POOLPAGE((flags & VM_SLEEP) ?
 		   0 : UVM_PGA_USERESERVE);
 #else
+#ifdef SH4A_EXT_ADDR32
+		pg = uvm_pagealloc_strat(NULL, 0, NULL,
+		    (flags & VM_SLEEP) ? 0 : UVM_PGA_USERESERVE,
+		    UVM_PGA_STRAT_ONLY, VM_FREELIST_P1ACCESS);
+#else
 		pg = uvm_pagealloc(NULL, 0, NULL,
 		   (flags & VM_SLEEP) ? 0 : UVM_PGA_USERESERVE);
+#endif
 #endif /* PMAP_ALLOC_POOLPAGE */
 		if (__predict_false(pg == NULL)) {
 			if (flags & VM_SLEEP) {
@@ -785,9 +803,15 @@ again:
 		    "loopva=%#"PRIxVADDR" loopsize=%#"PRIxVSIZE" vmem=%p",
 		    loopva, loopsize, vm);
 
+#ifdef SH4A_EXT_ADDR32
+		pg = uvm_pagealloc_strat(NULL, loopva, NULL,
+		    UVM_FLAG_COLORMATCH | pgaflags,
+		    UVM_PGA_STRAT_ONLY, VM_FREELIST_P1ACCESS);
+#else
 		pg = uvm_pagealloc(NULL, loopva, NULL,
 		    UVM_FLAG_COLORMATCH
 		    | ((flags & VM_SLEEP) ? 0 : UVM_PGA_USERESERVE));
+#endif
 		if (__predict_false(pg == NULL)) {
 			if (flags & VM_SLEEP) {
 				uvm_wait("plpg");

@@ -43,16 +43,44 @@
  * SH4
  *	        V  SZ  PR  SZ C  D  SH WT
  *	[28:10][8][7][6:5][4][3][2][1][0]
+ * SH4 PCMCIA
+ *	          V  SZ  PR  SZ C  D  SH WT
+ *	[28:10]  [8][7][6:5][4][3][2][1][0]
+ *         [11:9]
  *
  * [Software bit]
  *   [31]   - PMAP_WIRED bit (not hardware wired entry)
  *   [11:9] - SH4 PCMCIA Assistant bit. (space attribute bit only)
+ *
+ *----------------------------------------------------------------------
+ * SH4A 32bit physical address mode. tlb compatible mode.
+ *	 PPN   UB  V  SZ  PR  SZ C  D  SH WT
+ *	[31:10][9][8][7][6:5][4][3][2][1][0]
+ *
+ * SH4A 32bit physical address mode. tlb extended mode.
+ * 	 PPN   UB  V  C  D  SH WT
+ *	[31:10][9][8]           [3][2][1][0]
+ *      page size and protection set to PTEA
+ *
+ * 32bit physical address mode : SH4A_EXT_ADDR32
+ * TLB extended mode : SH4A_EXT_MMU
+ *
+ * [Software bit]
+ *   [10]   - PMAP_WIRED bit (not hardware wired entry)
+ * XXX SH4A_EXT_MMU is not implemented now. XXX
+ *
  */
 
 /*
  * Hardware bits
  */
+#ifdef SH4A_EXT_ADDR32
+#define	PG_PPN			0xfffff000	/* Physical page number mask */
+#define	PG_UB			0x00000200	/* Unbuffered write */
+#else
 #define	PG_PPN			0x1ffff000	/* Physical page number mask */
+#endif
+
 #define	PG_V			0x00000100	/* Valid */
 #define	PG_PR_MASK		0x00000060	/* Page protection mask */
 #define	PG_PR_URW		0x00000060	/* kernel/user read/write */
@@ -65,12 +93,28 @@
 #define	PG_SH			0x00000002	/* Share status */
 #define	PG_WT			0x00000001	/* Write-through (SH4 only) */
 
+#ifdef SH4A_EXT_ADDR32	/* 32bit physical address mode */
+#ifdef SH4A_EXT_MMU
+#define	PG_HW_BITS		0xfffff30e	/* [31:12][9:8][3:1] */
+#else
+#define	PG_HW_BITS		0xfffff37e	/* [31:12][9:8][6:1] */
+#endif
+#else	/* 29bit physical address mode */
+#ifdef SH4A_EXT_MMU
+#define	PG_HW_BITS		0x1ffff30e	/* [28:12][9:8][3:1] */
+#else
 #define	PG_HW_BITS		0x1ffff17e	/* [28:12][8][6:1] */
+#endif
+#endif
 
 /*
  * Software bits
  */
+#ifdef SH4A_EXT_ADDR32
+#define	_PG_WIRED		0x00000800
+#else
 #define	_PG_WIRED		0x80000000
+#endif
 
 /* SH4 PCMCIA MMU support bits */
 /* PTEA SA (Space Attribute bit) */

@@ -1,0 +1,9 @@
+#       $NetBSD$
+
+DEFTEXTADDR="0x89000000"	# u-boot load here.
+
+SYSTEM_LD_TAIL_EXTRA+=; \
+	echo ${OBJCOPY} -S -O binary $@ $@.bin; \
+	${OBJCOPY} -S -O binary $@ $@.bin
+
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin@}

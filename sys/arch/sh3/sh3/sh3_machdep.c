@@ -108,6 +108,10 @@ const char kgdb_devname[] = KGDB_DEVNAME;
 #include <sh3/intr.h>
 #include <sh3/ubcreg.h>
 
+#ifdef SH4A_EXT_ADDR32
+#include <sh3/mmu_sh4a.h>	//PMB
+#endif
+
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 int cpu_arch;
@@ -125,14 +129,14 @@ struct pcb *curpcb;
 #endif
 
 #define	VBR	(uint8_t *)SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN)
-vaddr_t ram_start = SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN);
+vaddr_t ram_start = SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN);// who use this ?
 /* exception handler holder (sh3/sh3/exception_vector.S) */
 extern char sh_vector_generic[], sh_vector_generic_end[];
 extern char sh_vector_interrupt[], sh_vector_interrupt_end[];
 #ifdef SH3
 extern char sh3_vector_tlbmiss[], sh3_vector_tlbmiss_end[];
 #endif
-#ifdef SH4
+#if defined SH4 || defined SH4A
 extern char sh4_vector_tlbmiss[], sh4_vector_tlbmiss_end[];
 #endif
 /*
@@ -150,10 +154,16 @@ sh_cpu_init(int arch, int product)
 	cpu_arch = arch;
 	cpu_product = product;
 
+#ifdef SH4A_EXT_ADDR32
+	// P1 cache configuration is PMB. not CCR_CB bit.
+	sh4a_pmb_setup(); // Setup P1/P2
+#endif
+
 #if defined(SH3) && defined(SH4)
 	/* Set register addresses */
 	sh_devreg_init();
 #endif
+
 	/* Cache access ops. */
 	sh_cache_init();
 
@@ -175,8 +185,8 @@ sh_cpu_init(int arch, int product)
 		memcpy(VBR + 0x400, sh3_vector_tlbmiss,
 		    sh3_vector_tlbmiss_end - sh3_vector_tlbmiss);
 #endif
-#ifdef SH4
-	if (CPU_IS_SH4)
+#if defined SH4 || defined SH4A
+	if (CPU_IS_SH4 || CPU_IS_SH4A)
 		memcpy(VBR + 0x400, sh4_vector_tlbmiss,
 		    sh4_vector_tlbmiss_end - sh4_vector_tlbmiss);
 #endif
@@ -242,7 +252,7 @@ sh_proc0_init(void)
 
 	/*
 	 * u-area map:
-	 * |pcb| .... | .................. |
+	 * | pcb | ... | .................. |
 	 * | PAGE_SIZE | USPACE - PAGE_SIZE |
          *        frame bot        stack bot
 	 * current frame ... r6_bank
@@ -287,7 +297,7 @@ sh_startup(void)
 	    sh4_vector_tlbmiss_end - sh4_vector_tlbmiss
 #elif defined(SH3)
 	    sh3_vector_tlbmiss_end - sh3_vector_tlbmiss
-#elif defined(SH4)
+#elif defined(SH4) || defined(SH4A)
 	    sh4_vector_tlbmiss_end - sh4_vector_tlbmiss
 #endif
 	    );

@@ -69,7 +69,7 @@ userret(struct lwp *l)
 				| SH3_UBC_CYCLE_CPU;
 	}
 #endif
-#ifdef SH4
+#if defined(SH4) || defined(SH4A)
 		if (CPU_IS_SH4) {
 			tf->tf_ubc = UBC_CYCLE_INSN | UBC_CYCLE_READ;
 		}

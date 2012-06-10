@@ -53,6 +53,7 @@
 void sh_mmu_init(void);
 void sh_mmu_information(void);
 void sh_tlb_set_asid(int);
+int sh_tlb_get_asid(void);
 
 #ifdef SH3
 void sh3_mmu_start(void);
@@ -68,6 +69,14 @@ void sh4_tlb_invalidate_addr(int, vaddr_t);
 void sh4_tlb_invalidate_asid(int);
 void sh4_tlb_invalidate_all(void);
 void sh4_tlb_update(int, vaddr_t, uint32_t);
+#endif
+
+#ifdef SH4A
+void sh4a_mmu_start(void);
+void sh4a_tlb_invalidate_addr(int, vaddr_t);
+void sh4a_tlb_invalidate_asid(int);
+void sh4a_tlb_invalidate_all(void);
+void sh4a_tlb_update(int, vaddr_t, uint32_t);
 #endif
 
 
@@ -101,6 +110,16 @@ extern void (*__sh_tlb_update)(int, vaddr_t, uint32_t);
 #define	sh_tlb_invalidate_asid(a)	sh4_tlb_invalidate_asid(a)
 #define	sh_tlb_invalidate_all()		sh4_tlb_invalidate_all()
 #define	sh_tlb_update(a, va, pte)	sh4_tlb_update(a, va, pte)
+
+#elif defined(SH4A)
+#define	sh_mmu_start()			sh4a_mmu_start()
+#define	sh_tlb_invalidate_addr(a, va)	sh4a_tlb_invalidate_addr(a, va)
+#define	sh_tlb_invalidate_asid(a)	sh4a_tlb_invalidate_asid(a)
+#define	sh_tlb_invalidate_all()		sh4a_tlb_invalidate_all()
+#define	sh_tlb_update(a, va, pte)	sh4a_tlb_update(a, va, pte)
+int sh4a_wired_counter_alloc (vaddr_t);
+void sh4a_wired_counter_dealloc (vaddr_t);
+void sh4a_tlb_update_wired(int, vaddr_t, uint32_t);
 
 #endif
 
